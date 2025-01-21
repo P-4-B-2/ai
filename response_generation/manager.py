@@ -1,98 +1,147 @@
-# from response_generation.qa import GeneralQAAgent
-from response_generation.detailed_qa import GeneralQAAgent
-from database_firebase import initialize_database, log_interaction
+from typing import List, Dict, Optional
 import json
-from groq import Groq
+from pathlib import Path
 import os
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-
 class ManagerAgent:
-    def __init__(self, qa_agent, stt_agent, tts_agent):
-        self.client = Groq(api_key=GROQ_API_KEY)
+    def __init__(self, qa_agent, stt_agent, tts_agent, evaluator_agent):
         self.qa_agent = qa_agent
         self.stt_agent = stt_agent
         self.tts_agent = tts_agent
+        self.evaluator_agent=evaluator_agent
+        self.questionnaire: List[Dict] = []
+        self.current_question_index = 0
+        self.max_follow_ups = 2
 
-
-    def load_questionnaire(self, file_path="questions_nl.json"):
+    def load_questionnaire(self, file_path: str = "questions.json") -> None:
         """
         Load the predefined questionnaire from a JSON file.
+        
+        Args:
+            file_path: Path to the JSON questionnaire file
         """
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"Questionnaire file not found: {file_path}")
+            
         with open(file_path, 'r') as file:
             self.questionnaire = json.load(file)
-        for question in self.questionnaire:
-            question['asked'] = False
 
+    def get_question(self, index: int) -> Optional[str]:
+        """Get question at specified index."""
+        if 0 <= index < len(self.questionnaire):
+            return self.questionnaire[index]["question"]
+        return None
+  
 
-    def get_question(self, index):
-        questions = self.load_questions()
-
-        """
-        Returns the next question in the questionnaire, or None if complete.
-        """
-        return questions[index]["question"] if index < len(questions) else None
-
-
-    def decide_next_step(self, question, response):
-        """
-        Sends a prompt to the Groq LLM and retrieves the response.
-        
-        :param prompt: The text prompt to send to the LLM.
-        :return: The response from the LLM as a string.
-        """
-        prompt = """
-        Context: The goal is to gather meaningful feedback from the user.
-        Decide:
-        - If the response: {response} is sufficient and related to the question {question}, reply with "move_to_next".
-        - If the response: {response} is unclear or insufficient, reply with "".
-        """
-
-        response = self.client.completion(
-            model="llama-3.1-70b-versatile",
-            prompt=prompt,
-            max_tokens=100,
-            temperature=0.7,
-            stop=None  # Adjust the stopping condition if needed
-        )
-        return response.get("choices", [{}])[0].get("text", "").strip()
- 
-
-    def run(self):
-        """
-        Execute the AI-driven questionnaire loop.
-        """
-        conversation_history = []
-        current_question_index=0
+    def run(self) -> None:
+        """Execute the AI-driven questionnaire loop."""
+        conversation_history: List[Dict] = []
+        self.load_questionnaire()
 
         while self.current_question_index < len(self.questionnaire):
-            # Ask the initial question
-            question = self.questionnaire[self.current_question_index]
-            self.tts_agent.text_to_speech(question)
-            conversation_history.append({"bench": question})
-            print(f"Asked: {question}")
+            current_question = self.get_question(self.current_question_index)
+            if not current_question:
+                break
+
+            # Ask the first question
+            self.tts_agent.text_to_speech(current_question)
+            conversation_history.append({"bench": current_question})
+            print(f"\nCurrent question: {current_question}")
+
+            # Prompt variables
+            next_question = None
+            follow_up_count = 0
+            prompt= ""
 
             while True:
-                # Get user reply
-                user_message = self.stt_agent.transcribe_audio()
-                print(f"User said: {user_message }")
+                try:
+                    #Listen to the user
+                    print("\nListening...")
+                    user_message = self.stt_agent.transcribe_audio()
+                    if not user_message:
+                        continue
+                    print(f"User said: {user_message}")
 
-                # LLM decides the next step
-                decision = self.decide_next_step(question, user_message)
+                    # Check if the user response is complete
+                    is_response_complete = self.evaluator_agent.evaluate_response(
+                        user_message,
+                        conversation_history,
+                        current_question,
+                    )
+                    print(is_response_complete)
 
-                if decision.startswith("move_to_next"):
-                    self.current_question_index += 1
-                    qa_response = self.qa_agent.generate_response(user_message , conversation_history, question)
-                    self.tts_agent.text_to_speech(question)
-                    print(f"Asked: {qa_response}")
+                    # Check if the user wants to end the conversation
+                    if is_response_complete == "End":
+                        qa_response = """Thank you for sharing your thoughts with me! Your feedback will help make our city better. Have a wonderful rest of your day!"""
+                        print(f"AI response: {qa_response}")
 
-                elif decision.startswith(""):
-                    qa_response = self.qa_agent.generate_response(user_message , conversation_history, question)
-                    self.tts_agent.speak(qa_response)
+                        # Update conversation history
+                        conversation_history.append({
+                            "user": user_message,
+                            "bench": qa_response
+                        })
+                        # Speak the bench response
+                        self.tts_agent.text_to_speech(qa_response)
+                        return  # Exit the entire run method
+                    
+                    # A detailed question can be asked max 2 times
+                    if follow_up_count >= self.max_follow_ups:
+                        print("The question was asked in details twice, so moving to the next one.")
+                        is_response_complete="Yes"
 
-                conversation_history.append({
-            "user": user_message,
-            "bench": qa_response
-        })
 
-      
+                    # Work only with topic related questions
+                    if is_response_complete!="Off":
+
+                        # If the user response is complete ask the next question from the questionnaire
+                        if is_response_complete=="Yes":
+
+                            prompt= "1. Start with a warm greeting and explain your purpose. 2. Respond kindly to their answers. Acknowledge that we are moving to the next question of our questionnaire. 3. Ask a provided follow-up question."
+                            print("User response is on-topic and complete.")
+                            next_question = self.get_question(self.current_question_index + 1)
+                            self.current_question_index += 1
+                            follow_up_count = 0
+
+                        # If the user response is not complete ask a more detailed question
+                        elif is_response_complete=="No":
+                            prompt= "1. Start with a warm greeting and explain your purpose. 2. Generate a clarifying question to kindly obtain more details or just a question to gather a user feedback about the city. The questions should be open-ended."
+                            print("User response is on-topic, but incomplete. Asking for more details.")
+                            next_question = None
+                            follow_up_count += 1
+                    else:
+
+                        prompt= "Handle off-topic user responses by confirming what was heard and politely redirecting the conversation back to the questionnaire. 1. Acknowledgment of the user's input. If the user asks off-topic question do not answer that. 2. A kind statement that the focus is on the questionnaire topics. 3. Ask the follow-up question to smoothly guide the conversation back on track."
+                        print("User response is off-topic. Asking the same question")
+                        next_question = self.get_question(self.current_question_index)
+                        follow_up_count+= 1
+
+                    
+                    qa_response = self.qa_agent.generate_response(
+                                prompt,
+                                user_message,
+                                conversation_history,
+                                follow_up_question=next_question
+                            )
+                    
+                    # Debugging
+                    print(follow_up_count)
+
+                    print(f"AI response: {qa_response}")
+
+                    # Speak the bench response
+                    self.tts_agent.text_to_speech(qa_response)
+                    # Update conversation history
+                    conversation_history.append({
+                            "user": user_message,
+                            "bench": qa_response
+                        })
+
+
+                except Exception as e:
+                    print(f"Error during conversation: {e}")
+                    self.tts_agent.text_to_speech(
+                        "I'm having trouble understanding. Could you please repeat that?"
+                    )
+
+        print("\nQuestionnaire completed!")

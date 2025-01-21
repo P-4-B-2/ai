@@ -1,46 +1,33 @@
 import sounddevice as sd
-from stt.stt_vosk import record_audio, create_recognizer, transcribe_audio
-# from tts import speak_text
-from response_generation.qa import GeneralQAAgent
-from questionnaire import get_question
-from database_firebase import initialize_database, log_interaction
-from tts.tts_pygame import text_to_speech
 import os
+from stt.stt_whisper import SpeechToTextAgent
+from response_generation.qa import GeneralQAAgent
+from tts.tts_pygame import TTSAgent
 from response_generation.manager import ManagerAgent
-# Audio settings
-SAMPLE_RATE = 16000
-CHANNELS = 1
-DURATION = 8
+from response_generation.evaluator import ResponseEvaluator
+
 
 def main():
-    # initialize_database()  # Ensure the database is ready
-    bench = GeneralQAAgent()
-    conversation_history = []
+    qa_agent = GeneralQAAgent()
+    stt_agent = SpeechToTextAgent(model_name="base")
+    tts_agent = TTSAgent()
+    evaluator_agent = ResponseEvaluator()
 
-    question_index = 0
-    question = get_question(question_index)
-    # text_to_speech("Hello! I am your friendly Talking Bench." + question)
-    text_to_speech("Hallo." + question)
+    manager = ManagerAgent(qa_agent, stt_agent, tts_agent, evaluator_agent)
 
-    conversation_history.append({"bench": question})
-    print(f"Asked: {question}")
-    while True:
-        # Record and transcribe audio
+    # welcome_message = """
+    #     Please note that this conversation will be recorded and your feedback will be used within our business. Please don't share any personal information with the bench! 
+    # Hello! I'm your friendly city feedback bench. I'm here to hear your thoughts about our city and collect your ideas for making it even better. Would you like to share your experiences with me? 
+    #     """
+    # manager.tts_agent.text_to_speech(welcome_message)
 
-        user_message = transcribe_audio()
+    print("Starting conversation loop...")
 
-        print(f"User said: {user_message }")
+    manager.run()
 
-        # Process the response with LLM
-        response = bench.generate_response(user_message , conversation_history)
-        text_to_speech(response)
-        print(f"Asked: {response}")
-         # Update conversation history
-        conversation_history.append({
-            "user": user_message,
-            "bench": response
-        })
-        question_index += 1
+    print("Stopping conversation loop...")
 
+    
 if __name__ == "__main__":
     main()
+

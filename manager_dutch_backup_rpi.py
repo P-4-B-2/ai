@@ -1,10 +1,7 @@
-from typing import List, Dict, Optional
-import json
+from typing import List, Dict
 from pathlib import Path
 import requests
 from datetime import datetime
-from requests.auth import AuthBase
-import os
 
 
 class ManagerAgent:
@@ -18,6 +15,8 @@ class ManagerAgent:
         self.max_follow_ups = 2
         self.conversation_id = None
         self.bench_id = bench_id
+        self.current_question_index = 0
+
         self.questions = []
         self.headers = {
             "Content-Type": "application/json"
@@ -36,6 +35,7 @@ class ManagerAgent:
         response = requests.post(url, headers=self.headers, json=payload)
         if response.status_code == 200:
             self.conversation_id = response.json()["id"]
+            print(f"Conversation started. ID: {self.conversation_id}")
         else:
             raise Exception(f"Failed to create conversation: {response.text}")
 
@@ -74,14 +74,21 @@ class ManagerAgent:
                 key=lambda q: q['isActive'],
                 reverse=True  # Ensures active questions are at the top
             )
+            print(f"Fetched {len(self.questions)} active questions.")
         else:
             raise Exception(f"Failed to fetch questions: {response.text}")
         
-    def get_question(self, question_id: int) -> Dict:
+    def get_question_by_id(self, question_id: int) -> Dict:
         """Retrieve a question by its ID."""
         for question in self.questions:
             if question['id'] == question_id:
                 return question
+        return None
+
+    def get_question_by_index(self, index: int) -> Dict:
+        """Retrieve a question by index."""
+        if 0 <= index < len(self.questions):
+            return self.questions[index]['text']
         return None
 
 
@@ -111,7 +118,6 @@ class ManagerAgent:
     
         # Fetch questions
         self.fetch_questions()
-        print(self.questions)
 
         # Prompt variables
         next_question = None
@@ -121,13 +127,14 @@ class ManagerAgent:
         # Add tracking for concatenated responses
         current_question_responses = []
 
+        current_question_index = self.current_question_index
+
         # Add counter for unsuccessful listening attempts
         silent_attempts = 0
         MAX_SILENT_ATTEMPTS = 5
-        current_question_id = self.questions[0]['id']
 
-        while current_question_id:
-            current_question = self.get_question(current_question_id)
+        while current_question_index < len(self.questions):
+            current_question = self.get_question_by_index(current_question_index)
             if not current_question:
                 return
     
@@ -155,7 +162,6 @@ class ManagerAgent:
                 
                     # Reset silent attempts counter when user responds
                     silent_attempts = 0
-                    print(f"User said: {user_message}")
                 
                 
                     # Evaluate the response
@@ -183,7 +189,6 @@ class ManagerAgent:
                         if is_response_complete == "Nee":
                             # Store response in detailed responses
                             current_question_responses.append(user_message)
-
                             prompt = "1. Genereer een verduidelijkende vraag om vriendelijk meer details te verkrijgen of gewoon een vraag om feedback van de gebruiker over de stad te verzamelen. De vragen moeten open-ended zijn."
                             next_question = None
                             follow_up_count += 1
@@ -199,14 +204,14 @@ class ManagerAgent:
                             self.submit_answer(current_question_id, final_response)
                         
                             prompt = "1. Reageer vriendelijk op hun antwoorden. Erken dat we doorgaan naar de volgende vraag in onze vragenlijst. 3. Stel een aangeleverde vervolgvraag."
-                            next_question = self.get_question(current_question_id + 1)
-                            current_question_id += 1
+                            next_question = self.get_question_by_index(current_question_index + 1)['text']
+                            current_question_index += 1
                             follow_up_count = 0
                             current_question_responses = []  # Reset for next question
                         
                     else:
                         prompt = "Behandel off-topic reacties van de gebruiker door te bevestigen wat er is gehoord en het gesprek op een beleefde manier terug te leiden naar de vragenlijst. 1. Erkenning van de input van de gebruiker. Als de gebruiker een off-topic vraag stelt, beantwoord deze dan niet. 2. Een vriendelijke opmerking dat de focus ligt op de onderwerpen van de vragenlijst. 3. Stel de vervolgvraag om het gesprek soepel weer op koers te brengen."
-                        next_question = self.get_question(current_question_id)
+                        next_question = self.get_question(current_question_id)['text']
 
                     qa_response = self.llm_agent.generate_response(
                         prompt,
@@ -215,6 +220,7 @@ class ManagerAgent:
                         follow_up_question=next_question
                     )
 
+                    print(f"AI response: {qa_response}")
                     self.tts_agent.text_to_speech(qa_response)
                     self.end_conversation()
 

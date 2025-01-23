@@ -1,1 +1,9 @@
-
+sounddevice
+vosk
+openai-whisper
+gtts
+pygame
+groq
+sounddevice
+torch
+numpy

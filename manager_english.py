@@ -1,9 +1,7 @@
 from typing import List, Dict, Optional
-import json
 from pathlib import Path
 import requests
 from datetime import datetime
-import os
 
 class ManagerAgent:
     def __init__(self, llm_agent, stt_agent, tts_agent, api_base_url, bench_id):
@@ -26,43 +24,23 @@ class ManagerAgent:
 
 
     # Post Conversation
-    # def create_conversation(self) -> None:
-    #     """Initialize a new conversation by sending a POST request."""
-    #     url = f"{self.api_base_url}/conversations"
-    #     payload = {
-    #         "startDatetime": datetime.now().isoformat() + "Z",
-    #         "endDatetime": None,
-    #         "sentiment": None,
-    #         "summary": None,
-    #         "benchId": self.bench_id,
-    #     }
-    #     response = requests.post(url, headers=self.headers, json=payload)
-    #     if response.status_code == 201:
-    #         self.conversation_id = response.json()["conversationId"]
-    #         print(f"Conversation started. ID: {self.conversation_id}")
-    #     else:
-    #         raise Exception(f"Failed to create conversation: {response.text}")
-
-
     def create_conversation(self) -> None:
         """Initialize a new conversation by sending a POST request."""
         url = f"{self.api_base_url}/conversations"
         payload = {
-            "id": 0,
             "startDatetime": datetime.now().isoformat() + "Z",
-            "endDatetime": datetime.now().isoformat() + "Z",
-            "sentiment": 0,
-            "summary": "string",
+            "endDatetime": None,
+            "sentiment": None,
+            "summary": None,
             "benchId": self.bench_id,
         }
         response = requests.post(url, headers=self.headers, json=payload)
-        print(url, self.headers, payload)
         if response.status_code == 201:
-            print(f"Conversation started.")
-        elif response.status_code==500:
-            print(401)
+            self.conversation_id = response.json()["conversationId"]
+            print(f"Conversation started. ID: {self.conversation_id}")
         else:
             raise Exception(f"Failed to create conversation: {response.text}")
+
 
     # Put Conversation
     def end_conversation(self) -> None:

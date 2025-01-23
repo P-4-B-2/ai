@@ -1,10 +1,7 @@
-from typing import List, Dict, Optional
-import json
+from typing import List, Dict
 from pathlib import Path
 import requests
 from datetime import datetime
-from requests.auth import AuthBase
-import os
 
 
 class ManagerAgent:
@@ -17,6 +14,7 @@ class ManagerAgent:
         self.api_base_url = api_base_url
         self.max_follow_ups = 2
         self.conversation_id = None
+        self.current_question_index = 0
         self.bench_id = bench_id
         self.questions = []
         self.headers = {
@@ -79,13 +77,18 @@ class ManagerAgent:
         else:
             raise Exception(f"Failed to fetch questions: {response.text}")
         
-    def get_question(self, question_id: int) -> Dict:
+    def get_question_by_id(self, question_id: int) -> Dict:
         """Retrieve a question by its ID."""
         for question in self.questions:
             if question['id'] == question_id:
                 return question
         return None
 
+    def get_question_by_index(self, index: int) -> Dict:
+        """Retrieve a question by index."""
+        if 0 <= index < len(self.questions):
+            return self.questions[index]
+        return None
 
     # Post Answers
     def submit_answer(self, question_id: int, user_response: str) -> None:
@@ -113,7 +116,6 @@ class ManagerAgent:
     
         # Fetch questions
         self.fetch_questions()
-        print(self.questions)
 
         # Prompt variables
         next_question = None
@@ -123,14 +125,14 @@ class ManagerAgent:
         # Add tracking for concatenated responses
         current_question_responses = []
 
+        current_question_index = self.current_question_index
+
         # Add counter for unsuccessful listening attempts
         silent_attempts = 0
         MAX_SILENT_ATTEMPTS = 5
-        current_question_id = self.questions[2]['id']
 
-        while current_question_id:
-            current_question = self.get_question(current_question_id)
-            print(current_question)
+        while current_question_index < len(self.questions):
+            current_question = self.get_question_by_index(current_question_index)
             if not current_question:
                 print("Questionnaire is complete")
                 return
@@ -156,9 +158,6 @@ class ManagerAgent:
                             print("Maximum silent attempts reached. Ending conversation.")
                             goodbye_message = "I haven't heard a response in a while. Thank you for your time. Have a great day!"
                             self.tts_agent.text_to_speech(goodbye_message)
-                            conversation_history.append({
-                                "bench": goodbye_message
-                            })
                             self.end_conversation()
                             return
                         continue
@@ -180,10 +179,6 @@ class ManagerAgent:
                     if is_response_complete == "End":
                         qa_response = """Thank you for sharing your thoughts with me! Your feedback will help make our city better. Have a wonderful rest of your day!"""
                         print(f"AI: {qa_response}")
-                        conversation_history.append({
-                            "user": user_message,
-                            "bench": qa_response
-                        })
                         self.tts_agent.text_to_speech(qa_response)
                         self.end_conversation()
                         return
@@ -217,15 +212,15 @@ class ManagerAgent:
                         
                             prompt = "1. Respond kindly to their answers. Acknowledge that we are moving to the next question of our questionnaire. 3. Ask a provided follow-up question."
                             print("Moving to next question with concatenated response:", combined_response)
-                            next_question = self.get_question(current_question_id + 1)
-                            current_question_id += 1
+                            next_question = self.get_question_by_index(current_question_index + 1)['text']
+                            current_question_index += 1
                             follow_up_count = 0
                             current_question_responses = []  # Reset for next question
                         
                     else:
                         prompt = "Handle off-topic user responses by confirming what was heard and politely redirecting the conversation back to the questionnaire. 1. Acknowledgment of the user's input. If the user asks off-topic question do not answer that. 2. A kind statement that the focus is on the questionnaire topics. 3. Ask the follow-up question to smoothly guide the conversation back on track."
                         print("User response is off-topic. Asking the same question")
-                        next_question = self.get_question(current_question_id)
+                        next_question = self.get_question_by_index(current_question_index)['text']
 
                     qa_response = self.llm_agent.generate_response(
                         prompt,

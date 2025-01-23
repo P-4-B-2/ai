@@ -12,7 +12,8 @@ class SpeechToTextAgent:
                  sample_rate: int = 16000,
                  recording_duration: float = 360.0,
                  silence_threshold: float = 0.05,
-                 silence_duration: float = 9.0):
+                 silence_duration: float = 9.0,
+                 language = "nl"):
         """
         Initialize the Speech-to-Text agent using Whisper.
         
@@ -28,6 +29,8 @@ class SpeechToTextAgent:
         self.recording_duration = recording_duration
         self.silence_threshold = silence_threshold
         self.silence_duration = silence_duration
+        self.default_language= language
+
         
         # Check for CUDA availability
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -101,7 +104,7 @@ class SpeechToTextAgent:
             result = self.model.transcribe(
                 audio_data,
                 fp16=torch.cuda.is_available(),
-                language="en"  # You can change this for other languages
+                language=self.default_language  # You can change this for other languages
             )
             
             transcribed_text = result["text"].strip()

@@ -88,7 +88,7 @@ class ManagerAgent:
     def get_question_by_index(self, index: int) -> Dict:
         """Retrieve a question by index."""
         if 0 <= index < len(self.questions):
-            return self.questions[index]['text']
+            return self.questions[index]
         return None
 
 

@@ -1,7 +1,7 @@
 import sounddevice as sd
 import os
 from stt.stt_whisper import SpeechToTextAgent
-from llm_dutch import LLMAgent
+from llm_dutch_geitje import LLMAgent
 from tts.tts import TTSAgent
 from manager_dutch_backup import ManagerAgent
 

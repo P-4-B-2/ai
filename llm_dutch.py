@@ -6,9 +6,9 @@ from datetime import datetime
 
 class LLMAgent:
     def __init__(self):
-        """Initialize the QA Agent with Groq client."""
+        """Initialize the LLM Agent with Groq client."""
         self.client = groq.Client(api_key=os.environ.get("GROQ_API_KEY"))
-        self.model = "mixtral-8x7b-32768"  
+        self.model = "llama-3.3-70b-versatile"  
 
     def generate_response(self, 
                          prompt: str,

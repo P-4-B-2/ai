@@ -91,7 +91,6 @@ class ManagerAgent:
             return self.questions[index]
         return None
 
-
     # Post Answers
     def submit_answer(self, question_id: int, user_response: str) -> None:
         """Submit a user's response for a specific question."""
@@ -106,8 +105,6 @@ class ManagerAgent:
             print("Response submitted successfully.")
         else:
             raise Exception(f"Failed to submit response: {response.text}")
-        
-
 
     def run(self) -> None:
         """Execute the AI-driven questionnaire loop."""

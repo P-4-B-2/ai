@@ -1,5 +1,0 @@
-[
-    { "id": 1, "text": "What do you like most about the city?", "madeAt": "", "isActive": true, "orderNumber": 0 },
-    { "id": 2, "text": "What improvements would you like to see?", "madeAt": "", "isActive": true, "orderNumber": 0},
-    { "id": 3, "text": "How do you feel about the city's public spaces?", "madeAt": "", "isActive": true, "orderNumber": 0}
-]

@@ -1,5 +1,8 @@
 from typing import List, Dict, Tuple
 import re
+import requests
+
+
 
 def analyze_sentiment_and_summarize(self, 
                                    conversation_history: List[Dict[str, str]], 
@@ -64,4 +67,25 @@ SUMMARY: <text>
         return 50, "Failed to generate summary."
     
 
+
+def update_conversation(self) -> None:
+    """Finalize the conversation by sending a PUT request with the end time."""
+    if not self.conversation_id:
+        raise Exception("No active conversation to end.")
+
+    sentiment_score, conversation_summary = self.analyze_sentiment_and_summarize(self.conversation_history)
+
+    url = f"{self.api_base_url}/conversations/{self.conversation_id}"
+    payload = {
+        "summary": conversation_summary,
+        "sentiment": sentiment_score,
+    }
     
+    try:
+        response = requests.put(url, headers=self.headers, json=payload)
+        if response.status_code == 200:
+            print(f"Conversation {self.conversation_id} successfully updated with end time.")
+        else:
+            raise Exception(f"Failed to update conversation: {response.text}")
+    except Exception as e:
+        print(f"Error finalizing conversation: {str(e)}")

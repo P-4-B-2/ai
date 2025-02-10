@@ -1,9 +1,9 @@
 import sounddevice as sd
 import os
 from stt.stt_whisper import SpeechToTextAgent
-from llm import LLMAgent
+from english.llm import LLMAgent
 from tts.tts import TTSAgent
-from manager_english_backup import ManagerAgent
+from english.manager_english_backup import ManagerAgent
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     stt_agent = SpeechToTextAgent(model_name="base", language=language)
     tts_agent = TTSAgent(language = language)
 
-    manager = ManagerAgent(llm_agent, stt_agent, tts_agent, "https://dev1.sebastiaandaniels.com/", 1)
+    manager = ManagerAgent(llm_agent, stt_agent, tts_agent, "https://frankdepratendebank.azurewebsites.net/", 1)
 
     welcome_message = """
         Please note that this conversation will be recorded and your feedback will be used within our business. Please don't share any personal information with the bench! 

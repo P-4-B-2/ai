@@ -222,7 +222,7 @@ class ManagerAgent:
                     else:
                         prompt = "Behandel off-topic reacties van de gebruiker door te bevestigen wat er is gehoord en het gesprek op een beleefde manier terug te leiden naar de vragenlijst. 1. Erkenning van de input van de gebruiker. Als de gebruiker een off-topic vraag stelt, beantwoord deze dan niet. 2. Een vriendelijke opmerking dat de focus ligt op de onderwerpen van de vragenlijst. 3. Stel de vervolgvraag om het gesprek soepel weer op koers te brengen."
                         print("User response is off-topic. Asking the same question")
-                        next_question = self.get_question(current_question_id)['text']
+                        next_question = self.get_question_by_id(current_question_id)['text']
 
                     qa_response = self.llm_agent.generate_response(
                         prompt,

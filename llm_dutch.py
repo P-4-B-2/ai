@@ -66,7 +66,7 @@ Jouw taak:"""
         for msg in conversation_history[-5:]:
             if "user" in msg:
                 messages.append({"role": "user", "content": msg["user"]})
-            if "bench" in msg:
+            if "bank" in msg:
                 messages.append({"role": "assistant", "content": msg["bank"]})
                 
         # Add the current user message
@@ -129,8 +129,8 @@ Geef een oordeel in het volgende formaat: 'Ja', 'Nee', 'Off', 'Einde'.
         for msg in conversation_history[-5:]:
             if "user" in msg:
                 messages.append({"role": "user", "content": msg["user"]})
-            if "assistant" in msg:
-                messages.append({"role": "assistant", "content": msg["assistant"]})
+            if "bank" in msg:
+                messages.append({"role": "bank", "content": msg["bank"]})
         messages.append({"role": "user", "content": f"Vraag: {current_question}\nReactie: {user_message}"})
 
         try:

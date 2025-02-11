@@ -11,6 +11,12 @@ class SSAgent:
             self.model = "llama-3.3-70b-versatile" 
             self.conversation_id = None
             self.last_conversation = None
+            self.api_base_url = "https:/frankdepratendebank.azurewebsites.net/"
+            self.headers = {
+            "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjhkMjUwZDIyYTkzODVmYzQ4NDJhYTU2YWJhZjUzZmU5NDcxNmVjNTQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUDRCMiAoRnJhbmsgZGUgUHJhdGVuZGUgQmFuaykiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTDdjSE04djRLNS1WRmVsNHFfMzVqb2VpR1loYXBtWjdWcS1VNXIwSnpTM3VpQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9mcmFuay1kZS1wcmF0ZW5kZS1iYW5rIiwiYXVkIjoiZnJhbmstZGUtcHJhdGVuZGUtYmFuayIsImF1dGhfdGltZSI6MTczOTI2NjczNywidXNlcl9pZCI6ImZKOHZyTkxOWEFXMUJ5R2NUVXZiWmhvM1pjSTMiLCJzdWIiOiJmSjh2ck5MTlhBVzFCeUdjVFV2YlpobzNaY0kzIiwiaWF0IjoxNzM5MjY2NzM3LCJleHAiOjE3MzkyNzAzMzcsImVtYWlsIjoiZDI4MDA1ODI2QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTExNDI1MTc2NTUxMjE2MTg1OTkzIl0sImVtYWlsIjpbImQyODAwNTgyNkBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.TXZRJQ0bIkSwAl_Op00rBuk4jUNz5ehsfQg1cJm-d2v7Pre1YU5pKo0vMqhykMUHSRbhi2z4SYXupZs__1Wlf9BZBvj3n5QOQ6MK6i-c-d7PSpGcxQTej0KGeW86J8IOQjSrXBPSgg8cPfpSbqM4x4yoS_ASjGL827Sw72j1y_QoRk54o1CuvAw9jBKM9WOgvFL20MRlRzvBrDUWbLjsJ10Zx5vwvOWNmq5EP1HXI7Cd0VdmDTp8grAGLNg7OXCmUVm0FoVFLb_EkLGJ_wQjWLRt3JvildRi3DIjbADK-Hag-V98x1Qmx4iWsig3ea_0DGym9JzluqPSMWhuOdpFZQ",
+            "Content-Type": "application/json",
+        }
+
 
         # Get Conversations  
         def fetch_last_conversation(self) -> None:

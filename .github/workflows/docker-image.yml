@@ -24,4 +24,4 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Push to Docker Hub
-      run: docker push daansterckx/p4b2-api:latest
+      run: docker push daansterckx/p4b2-ai:latest

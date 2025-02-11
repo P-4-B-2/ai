@@ -38,7 +38,7 @@ class SSAgent:
                 print("No conversation ID found. Please fetch the last conversation first.")
                 return
 
-            url = f"{self.api_base_url}/answers?conversation_id={self.conversation_id}"
+            url = f"{self.api_base_url}/answers/conversation/{self.conversation_id}"
             response = requests.get(url, headers=self.headers)
 
             if response.status_code == 200:
@@ -89,7 +89,6 @@ class SSAgent:
                 raise Exception(f"Failed to update answer {answer_id}: {response.text}")
 
             
-
         def analyze_sentiment_and_summarize(self, 
                                    conversation_history: List[Dict[str, str]], 
                                    sentiment_max_tokens: int = 10, 
@@ -204,7 +203,7 @@ class SSAgent:
             try:
 
                 answers =[]
-                
+
                 # Fetch the last conversation
                 self.fetch_last_conversation()
 

@@ -17,10 +17,34 @@ class SSAgent:
             self.conversation_history=None
             self.api_base_url = "https://frankdepratendebank.azurewebsites.net/api/"
             self.headers = {
-            "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjhkMjUwZDIyYTkzODVmYzQ4NDJhYTU2YWJhZjUzZmU5NDcxNmVjNTQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUDRCMiAoRnJhbmsgZGUgUHJhdGVuZGUgQmFuaykiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTDdjSE04djRLNS1WRmVsNHFfMzVqb2VpR1loYXBtWjdWcS1VNXIwSnpTM3VpQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9mcmFuay1kZS1wcmF0ZW5kZS1iYW5rIiwiYXVkIjoiZnJhbmstZGUtcHJhdGVuZGUtYmFuayIsImF1dGhfdGltZSI6MTczOTM2MDcxMCwidXNlcl9pZCI6ImZKOHZyTkxOWEFXMUJ5R2NUVXZiWmhvM1pjSTMiLCJzdWIiOiJmSjh2ck5MTlhBVzFCeUdjVFV2YlpobzNaY0kzIiwiaWF0IjoxNzM5MzYwNzEwLCJleHAiOjE3MzkzNjQzMTAsImVtYWlsIjoiZDI4MDA1ODI2QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTExNDI1MTc2NTUxMjE2MTg1OTkzIl0sImVtYWlsIjpbImQyODAwNTgyNkBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.H-sJG0aEKchYiaasylVePJpqZCbNnNhqPvpUoaK0C2z7PRnCswWusMrLuiToH5YSzRC8GR7h8z1jcKeY8PF7JjY_7fEKFSO5vNZLYa0hOEb4wPnEJNCWuV-n3Vdn2iYINg89FoggQu7gLcwTDNlYnIzkA7Iju9GRe6gzJ78IYTc-I-2B3GPb_3MBBY3rcQDLDz514H_Sa8yGOSmFIhy2inkHpGHJwhb1QaBHBje7s4spTV0tIzQB6eDvQk10PjDtLTfh8iEDIvwJNIljh4u8Bx8hv_acyZPZrTnjr3BMW8iEhbv3oNOjlrcIr-QjDASM8vgt8eta3QS9uGYssoz08A",
+            "Authorization": "",
             "Content-Type": "application/json",
         }
 
+        # Get Bearer Token
+        def fetch_bearer_token(self) -> None:
+            """Fetch the last conversation for analysis."""
+            url = f"{self.api_base_url}token/generate"
+
+            payload = {
+                "ApiKey": os.environ.get("API_KEY")
+            }
+
+            response = requests.post(url, headers=self.headers, json=payload)
+
+            if response.status_code == 200:
+                token = response.json()
+                if token:
+                    self.headers = {
+                    "Authorization": "Bearer " + token['token'],
+                    "Content-Type": "application/json",
+                    }
+                    print(self.headers)
+                    print(f"Fetched the token successfully")
+                else:
+                    print("No response.")
+            else:
+                raise Exception(f"Failed to fetch token: {response.status_code}")
 
         # Get Conversations  
         def fetch_last_conversation(self) -> None:
@@ -47,7 +71,6 @@ class SSAgent:
             else:
                 raise Exception(f"Failed to fetch conversations: {response.status_code}")
     
-       
        # Get Questions
         def fetch_questions(self) -> None:
             """Fetch all questions from the last conversation for analysis."""
@@ -289,6 +312,10 @@ Geëxtraheerde trefwoorden: [verkeer, parkeren]
         def run(self) -> None:
             """Run the SS Agent to process the conversation and provide analysis."""
             try:
+
+                #Fetch bearer token
+
+                self.fetch_bearer_token()
                 # Fetch the last conversation
                 self.fetch_last_conversation()
 

@@ -16,30 +16,36 @@ class ManagerAgent:
         self.conversation_id = None
         self.bench_id = bench_id
         self.current_question_index = 0
+        self.new_conversation = None
 
         self.questions = []
         self.headers = {
             "Content-Type": "application/json"
         }
 
-
-    # Post Conversation
+       # Post Conversation
     def create_conversation(self) -> None:
         """Initialize a new conversation by sending a POST request."""
         url = f"{self.api_base_url}/conversations"
 
+        
         payload = {
-            "startDatetime": datetime.now().isoformat() + "Z",
+            "start_datetime": datetime.now().isoformat() + "Z",
+            "end_datetime": None,
+            "sentiment": None,
+            "summary": None,
             "bench_id": self.bench_id,
         }
         response = requests.post(url, headers=self.headers, json=payload)
-        if response.status_code == 200:
-            self.conversation_id = response.json()["id"]
+        if response.status_code == 201:
+            self.new_conversation = payload
+            self.conversation_id = response.json()["conversationId"]
             print(f"Conversation started. ID: {self.conversation_id}")
         else:
             raise Exception(f"Failed to create conversation: {response.text}")
 
-    # Put Conversation
+
+        # Put Conversation
     def end_conversation(self) -> None:
         """Finalize the conversation by sending a PUT request with the end time."""
         if not self.conversation_id:
@@ -47,16 +53,19 @@ class ManagerAgent:
 
         url = f"{self.api_base_url}/conversations/{self.conversation_id}"
         payload = {
-            "endTime": datetime.now().isoformat() + "Z",  # Current UTC time in ISO 8601 format
+            "start_datetime": self.new_conversation['start_datetime'],
+            "end_datetime": datetime.now().isoformat() + "Z",  # Current UTC time in ISO 8601 format
             "summary": None,  # Optionally, you can update this field
             "sentiment": None,  # Optionally, update sentiment analysis if available
+            "bench_id": self.bench_id,
+
         }
-        response = requests.put(url, headers=self.headers, json=payload)
+        response = requests.put(url, headers=self.headers,json=payload)
         if response.status_code == 200:
             print(f"Conversation {self.conversation_id} successfully updated with end time.")
         else:
             raise Exception(f"Failed to update conversation: {response.text}")
-        
+   
     # Get Questionnaire
     def fetch_questions(self) -> None:
         """Fetch questions for the questionnaire."""
@@ -96,9 +105,10 @@ class ManagerAgent:
         """Submit a user's response for a specific question."""
         url = f"{self.api_base_url}/answers"
         payload = {
-            "conversation_id": self.conversation_id,
-            "question_id": question_id,
-            "answer_text": user_response,
+            "conversationId": self.conversation_id,
+            "questionId": question_id,
+            "response": user_response,
+            "keywords": []
         }
         response = requests.post(url, headers=self.headers, json=payload )
         if response.status_code == 200:

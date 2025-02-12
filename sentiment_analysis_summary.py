@@ -3,40 +3,87 @@ import re
 import groq
 import requests
 import os
+from datetime import datetime
 
 class SSAgent:
         def __init__(self):
             """Initialize the SS Agent with Groq client."""
             self.client = groq.Client(api_key=os.environ.get("GROQ_API_KEY"))
-            self.model = "llama-3.3-70b-versatile" 
-            self.conversation_id = None
+            self.model = "llama-3.1-8b-instant" 
             self.last_conversation = None
-            self.api_base_url = "https:/frankdepratendebank.azurewebsites.net/"
+            self.conversation_id = None
+            self.answers = None
+            self.questions = None
+            self.conversation_history=None
+            self.api_base_url = "https://frankdepratendebank.azurewebsites.net/api/"
             self.headers = {
-            "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjhkMjUwZDIyYTkzODVmYzQ4NDJhYTU2YWJhZjUzZmU5NDcxNmVjNTQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUDRCMiAoRnJhbmsgZGUgUHJhdGVuZGUgQmFuaykiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTDdjSE04djRLNS1WRmVsNHFfMzVqb2VpR1loYXBtWjdWcS1VNXIwSnpTM3VpQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9mcmFuay1kZS1wcmF0ZW5kZS1iYW5rIiwiYXVkIjoiZnJhbmstZGUtcHJhdGVuZGUtYmFuayIsImF1dGhfdGltZSI6MTczOTI2NjczNywidXNlcl9pZCI6ImZKOHZyTkxOWEFXMUJ5R2NUVXZiWmhvM1pjSTMiLCJzdWIiOiJmSjh2ck5MTlhBVzFCeUdjVFV2YlpobzNaY0kzIiwiaWF0IjoxNzM5MjY2NzM3LCJleHAiOjE3MzkyNzAzMzcsImVtYWlsIjoiZDI4MDA1ODI2QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTExNDI1MTc2NTUxMjE2MTg1OTkzIl0sImVtYWlsIjpbImQyODAwNTgyNkBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.TXZRJQ0bIkSwAl_Op00rBuk4jUNz5ehsfQg1cJm-d2v7Pre1YU5pKo0vMqhykMUHSRbhi2z4SYXupZs__1Wlf9BZBvj3n5QOQ6MK6i-c-d7PSpGcxQTej0KGeW86J8IOQjSrXBPSgg8cPfpSbqM4x4yoS_ASjGL827Sw72j1y_QoRk54o1CuvAw9jBKM9WOgvFL20MRlRzvBrDUWbLjsJ10Zx5vwvOWNmq5EP1HXI7Cd0VdmDTp8grAGLNg7OXCmUVm0FoVFLb_EkLGJ_wQjWLRt3JvildRi3DIjbADK-Hag-V98x1Qmx4iWsig3ea_0DGym9JzluqPSMWhuOdpFZQ",
+            "Authorization": "",
             "Content-Type": "application/json",
         }
 
+        # Get Bearer Token
+        def fetch_bearer_token(self) -> None:
+            """Fetch the last conversation for analysis."""
+            url = f"{self.api_base_url}token/generate"
+
+            payload = {
+                "ApiKey": os.environ.get("API_KEY")
+            }
+
+            response = requests.post(url, headers=self.headers, json=payload)
+
+            if response.status_code == 200:
+                token = response.json()
+                if token:
+                    self.headers = {
+                    "Authorization": "Bearer " + token['token'],
+                    "Content-Type": "application/json",
+                    }
+                    print(self.headers)
+                    print(f"Fetched the token successfully")
+                else:
+                    print("No response.")
+            else:
+                raise Exception(f"Failed to fetch token: {response.status_code}")
 
         # Get Conversations  
         def fetch_last_conversation(self) -> None:
             """Fetch the last conversation for analysis."""
             url = f"{self.api_base_url}/conversations"
             response = requests.get(url, headers=self.headers)
+
+            
             if response.status_code == 200:
-                conversations = sorted(
-                    response.json(),
-                    key=lambda q: q["orderNumber"]
-                )
-                if conversations:
-                    self.last_conversation = conversations[-1]  # Get the last conversation
+                conversations = response.json()
+                conversations_with_end_datetime = [
+                convo for convo in conversations if convo['endDatetime'] is not None
+                ]
+                if conversations_with_end_datetime:
+                    # Sort conversations by 'end_datetime' in descending order and get the most recent one
+                    conversations_with_end_datetime.sort(
+                        key=lambda x: datetime.fromisoformat(x['endDatetime']), reverse=True
+                    )
+                    self.last_conversation = conversations_with_end_datetime[0]  # Get the most recent conversation
                     self.conversation_id = self.last_conversation['id']
                     print(f"Fetched last conversation: {self.last_conversation}")
                 else:
-                    print("No conversations found.")
+                    print("No conversations with a valid 'end_datetime' found.")
             else:
-                raise Exception(f"Failed to fetch conversations: {response.text}")
+                raise Exception(f"Failed to fetch conversations: {response.status_code}")
+    
+       # Get Questions
+        def fetch_questions(self) -> None:
+            """Fetch all questions from the last conversation for analysis."""
 
+            url = f"{self.api_base_url}questions"
+            response = requests.get(url, headers=self.headers)
+
+            if response.status_code == 200:
+                self.questions = response.json()
+                print(f"Fetched {len(self.questions)} questions")
+            else:
+                raise Exception(f"Failed to fetch questions: {response.text}")
+            
         # Get Answers
         def fetch_answers(self) -> None:
             """Fetch all answers from the last conversation for analysis."""
@@ -44,7 +91,7 @@ class SSAgent:
                 print("No conversation ID found. Please fetch the last conversation first.")
                 return
 
-            url = f"{self.api_base_url}/answers/conversation/{self.conversation_id}"
+            url = f"{self.api_base_url}answers/conversation/{self.conversation_id}"
             response = requests.get(url, headers=self.headers)
 
             if response.status_code == 200:
@@ -56,51 +103,98 @@ class SSAgent:
         # Put Conversation
         def update_conversation(self) -> None:
             """Finalize the conversation by sending a PUT request with the end time."""
-            if not self.conversation_id:
-                raise Exception("No active conversation to end.")
 
             sentiment_score, conversation_summary = self.analyze_sentiment_and_summarize(self.conversation_history)
 
-            url = f"{self.api_base_url}/conversations/{self.conversation_id}"
+            url = f"{self.api_base_url}conversations/{self.conversation_id}"
             payload = {
+                "id":self.last_conversation['id'],
+                "startDatetime": self.last_conversation['startDatetime'],
+                "endDatetime": self.last_conversation['endDatetime'],
+                "sentiment": int(sentiment_score),
                 "summary": conversation_summary,
-                "sentiment": sentiment_score,
+                "benchId": self.last_conversation['benchId']
             }
+
     
             try:
                 response = requests.put(url, headers=self.headers, json=payload)
-                if response.status_code == 200:
-                    print(f"Conversation {self.conversation_id} successfully updated with end time.")
+                if response.status_code == 204:
+                    print(f"Conversation {self.conversation_id} successfully updated.")
                 else:
-                    raise Exception(f"Failed to update conversation: {response.text}")
+                    raise Exception(f"Failed to update conversation {response.content}")
             except Exception as e:
                 print(f"Error finalizing conversation: {str(e)}")
 
         # Put Answer
-        def update_answer_with_keywords(self, answer_id: int, keywords: list) -> None:
+        def update_answer_with_keywords(self, answer, keywords: list) -> None:
             """Update an existing answer with a new response and attach extracted keywords."""
-            url = f"{self.api_base_url}/answers/{answer_id}"
+            url = f"{self.api_base_url}answers/{answer['id']}"
     
+            # If the keywords list is empty or contains ['[]'], we set it to None
+            if not keywords or keywords == ['[]']:
+                keywords = None
             # Prepare the payload to update the response
             payload = {
+                
+                "id":answer['id'],
+                "conversationId": answer['conversationId'],
+                "questionId": answer['questionId'],
+                "response": answer['response'],
                 "keywords": keywords  # Attach keywords to the response
             }
+            print(payload)
     
             # Send the PUT request with the updated data
             response = requests.put(url, json=payload, headers=self.headers)
 
-            if response.status_code == 200:
-                print(f"Successfully updated answer {answer_id} with new response and keywords.")
+            if response.status_code == 204:
+                print(f"Successfully updated answer {answer['id']} with new response and keywords.")
             else:
-                raise Exception(f"Failed to update answer {answer_id}: {response.text}")
-
+                raise Exception(f"Failed to update answer {answer['id']}: {response.text}")
+           
+        def create_conversation_history(self) -> None:
+                """
+        Create a conversation history by matching questions and answers for a specific conversation.
+        Format the history to be compatible with the sentiment analysis function.
+        
+        Args:
+            conversation_id: The ID of the conversation to fetch history for
+            questions: List of all questions
+            answers: List of all answers
             
+        Returns:
+            List of dictionaries containing messages in the format expected by the sentiment analyzer
+                """
+                # Fetch all answers for the conversation
+                self.fetch_answers()
+                answers = self.answers
+        
+                # Fetch all questions for the conversation
+                self.fetch_questions()
+                questions = self.questions
+        
+                # Create a lookup dictionary for questions using their IDs
+                question_lookup = {q['id']: q for q in questions}
+        
+                # Create conversation history directly from answers
+                conversation_history = []
+                for answer in answers:
+                    # Get the corresponding question using the questionId
+                    question = question_lookup.get(answer['questionId'])
+            
+                    if question:
+                        conversation_history.append({
+                            "bank": question['text'],
+                            "user": answer['response']
+                        })
+
+                        
+                self.conversation_history = conversation_history
+        
         def analyze_sentiment_and_summarize(self, 
                                    conversation_history: List[Dict[str, str]], 
-                                   sentiment_max_tokens: int = 10, 
-                                   summary_max_tokens: int = 50, 
-                                   temperature: float = 0.4, 
-                                   top_p: float = 0.9) -> Tuple[int, str]:
+                                   ) -> Tuple[int, str]:
             """
             Analyzes the sentiment of the conversation and generates a summary in a single function.
     
@@ -126,24 +220,29 @@ class SSAgent:
         SENTIMENT: <score>
         SAMENVATTING: <tekst>
         """
+            
+
     
             # Construct messages
             messages = [{"role": "system", "content": system_prompt}]
             for msg in conversation_history: 
+                if "bank" in msg:
+                    messages.append({"role": "assistant", "content": msg["bank"]})
                 if "user" in msg:
                     messages.append({"role": "user", "content": msg["user"]})
-                if "bank" in msg:
-                    messages.append({"role": "bank", "content": msg["bank"]})
-    
-            try:
-                chat_completion = self.client.chat.completions.create(
+
+
+            chat_completion = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    temperature=temperature,
-                    max_tokens=sentiment_max_tokens + summary_max_tokens,  # Allocate tokens
-                    top_p=top_p,
+                    temperature=0.4,
+                    max_tokens=150,  # Allocate tokens
+                    top_p=0.9,
                     stream=False
                 )
+
+
+            try:
                 response = chat_completion.choices[0].message.content.strip()
         
                 # Extract sentiment score and summary
@@ -151,11 +250,12 @@ class SSAgent:
                 summary_match = re.search(r"SAMENVATTING: (.*)", response, re.DOTALL)
         
                 score = int(sentiment_match.group(1)) if sentiment_match else 50
-                summary = summary_match.group(1).strip() if summary_match else "Failed to generate summary."
+                summary = summary_match.group(1).strip() if summary_match else ""
         
                 return max(1, min(score, 100)), summary
-            except Exception as e:
-                return 50, "Failed to generate summary."
+            
+            except KeyError as e:
+                raise Exception(f"Error in processing response: {e}")
     
         def extract_keywords(self, answer: str):
             """
@@ -164,60 +264,69 @@ class SSAgent:
             """
             prompt = f"""
             Je bent een AI die relevante trefwoorden extraheert uit gebruikersreacties om feedback over een stad te classificeren.
-            Extraheer **alle relevante trefwoorden** uit de reactie op basis van de volgende categorieën:
+Extraheer **alle relevante trefwoorden** uit de reactie op basis van de volgende categorieën:
 
-            - Openbaar Vervoer (bus, metro, trein, verkeer, parkeren)
-            - Toerisme (museum, bezienswaardigheden, monumenten, hotels)
-            - Infrastructuur (wegen, bruggen, bouw, netheid)
-            - Veiligheid (criminaliteit, politie, verlichting, ongelukken)
-            - Overig (als geen van de bovenstaande van toepassing is)
+- Openbaar Vervoer (bus, metro, trein, verkeer, parkeren)
+- Toerisme (museum, bezienswaardigheden, monumenten, hotels)
+- Infrastructuur (wegen, bruggen, bouw, netheid)
+- Veiligheid (criminaliteit, politie, verlichting, ongelukken)
+...
 
-            ### Gebruikersreactie:
-            "{answer}"
+### Gebruikersreactie:
+"{answer}"
 
-            Geef de geëxtraheerde trefwoorden terug als een lijst, gescheiden door komma's: [trefwoord1, trefwoord2, ...]
+Geef de geëxtraheerde trefwoorden terug als een lijst, gescheiden door komma's: [trefwoord1, trefwoord2, ...]. 
+
+**Voorbeeld:**  
+Gebruikersreactie: "Er was veel verkeer en ik had moeite om een parkeerplaats te vinden."  
+Geëxtraheerde trefwoorden: [verkeer, parkeren]
             """
 
             # Sending the request to the API
-            response = self.client.chat.completions.create(
+            chat_completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "system", "content": "Je bent een assistent voor trefwoordextractie."},
                         {"role": "user", "content": prompt}],
-                temperature=0.2
+                temperature=0.0
             )
-
-            # Assuming the response content is in response.choices[0].message.content
+            extracted_keywords_list = None
             try:
                 # Extract keywords from the response, assuming the content is a comma-separated list
-                response_content = response['choices'][0]['message']['content'].strip()
-                if response_content.startswith("Trefwoord:"):
-                    # If the response includes "Trefwoord:", remove it
-                    response_content = response_content.replace("Trefwoord:", "").strip()
-        
-                # Split the response into individual keywords
-                extracted_keywords_list = [keyword.strip() for keyword in response_content.split(",")]
-        
+                response_content = chat_completion.choices[0].message.content.strip()
+                if "Geëxtraheerde trefwoorden:" in response_content:
+                    # Extract everything after "Geëxtraheerde trefwoorden:"
+                    response_content = response_content.split("Geëxtraheerde trefwoorden:")[1].strip()
+
+                    # If the response is "None", return None
+                    if response_content.lower() == "none":
+                        extracted_keywords_list = None
+                    else:
+                        # Otherwise, split the keywords by commas and strip extra spaces
+                        extracted_keywords_list = [keyword.strip() for keyword in response_content.split(",")]
+
                 return extracted_keywords_list
             
             except KeyError as e:
                 raise Exception(f"Error in processing response: {e}")
 
-
-
         def run(self) -> None:
             """Run the SS Agent to process the conversation and provide analysis."""
             try:
 
-                answers =[]
+                #Fetch bearer token
 
+                self.fetch_bearer_token()
                 # Fetch the last conversation
                 self.fetch_last_conversation()
+
+                # Create conversation history
+                self.create_conversation_history()
 
                 # Update the conversation with sentiment score and summary
                 self.update_conversation()
 
-                # Fetch all answers for the conversation using get_answer method
-                answers = self.get_answers(self.conversation_id)
+
+                answers = self.answers
 
                 # Iterate over the answers and extract keywords
                 for answer in answers:
@@ -226,8 +335,15 @@ class SSAgent:
                         keywords = self.extract_keywords(answer['response'])
 
                         # Update the conversation in the database with the extracted keywords
-                        self.update_answer_with_keywords(answer['id'], keywords)
+                        self.update_answer_with_keywords(answer, keywords)
 
             except Exception as e:
                 print(f"Error in running SS Agent: {str(e)}")
 
+
+
+if __name__ == "__main__":
+
+    ss = SSAgent()
+
+    ss.run()

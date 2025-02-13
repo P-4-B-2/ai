@@ -78,6 +78,7 @@ class ManagerAgent:
 
         url = f"{self.api_base_url}conversations/{self.conversation_id}"
         payload = {
+            "id": self.conversation_id,
             "startDatetime": self.new_conversation['startDatetime'],
             "endDatetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # Current UTC time in ISO 8601 format
             "summary": None,  # Optionally, you can update this field

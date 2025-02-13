@@ -123,12 +123,11 @@ class ManagerAgent:
         """Submit a user's response for a specific question."""
         url = f"{self.api_base_url}answers"
         payload = {
-            "id": self.conversation_id,
-            "response": user_response,
-            "conversationId": self.conversation_id,
-            "questionId": question_id,
-            "keywords": []
-        }
+            "ConversationId": self.conversation_id,
+            "QuestionId": question_id,
+            "response": user_response
+            }
+            
         response = requests.post(url, headers=self.headers, json=payload )
         if response.status_code == 200:
             print("Response submitted successfully.")

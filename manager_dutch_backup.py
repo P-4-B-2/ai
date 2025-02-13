@@ -129,7 +129,7 @@ class ManagerAgent:
             }
             
         response = requests.post(url, headers=self.headers, json=payload )
-        if response.status_code == 200:
+        if response.status_code == 201:
             print("Response submitted successfully.")
         else:
             raise Exception(f"Failed to submit response: {response.text}")

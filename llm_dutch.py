@@ -123,14 +123,14 @@ Geef een oordeel in het volgende formaat: 'Ja', 'Nee', 'Off', 'Einde'.
 - 'Ja': De reactie is gerelateerd aan de vraag en beantwoordt de vraag voldoende.  
 - 'Nee': De reactie is gerelateerd aan de vraag, maar is onvolledig of mist details.  
 - 'Off': De reactie is niet relevant of niet gerelateerd aan de vraag.  
-- 'Einde': De reactie geeft aan dat de gebruiker het gesprek wil beëindigen. Bijvoorbeeld, 'Tot ziens' of als de reactie aangeeft dat de persoon geen vragen meer wil beantwoorden."""
+- 'Einde': De reactie geeft aan dat de gebruiker het gesprek wil beëindigen. Bijvoorbeeld, 'Tot ziens', 'Ik zil graag het gesprek beëindigen' of als de reactie aangeeft dat de persoon geen vragen meer wil beantwoorden."""
         # Construct messages
         messages = [{"role": "system", "content": evaluator_role}]
         for msg in conversation_history[-5:]:
             if "user" in msg:
                 messages.append({"role": "user", "content": msg["user"]})
             if "bank" in msg:
-                messages.append({"role": "bank", "content": msg["bank"]})
+                messages.append({"role": "assistant", "content": msg["bank"]})
         messages.append({"role": "user", "content": f"Vraag: {current_question}\nReactie: {user_message}"})
 
         try:

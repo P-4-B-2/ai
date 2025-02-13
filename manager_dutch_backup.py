@@ -165,6 +165,7 @@ class ManagerAgent:
             current_question = self.get_question_by_index(current_question_index)
             if not current_question:
                 print("Questionnaire is complete")
+                self.end_conversation()
                 return
     
             # Ask the first question
@@ -261,7 +262,6 @@ class ManagerAgent:
 
                     print(f"AI response: {qa_response}")
                     self.tts_agent.text_to_speech(qa_response)
-                    self.end_conversation()
 
                     # Update conversation history
                     conversation_history.append({

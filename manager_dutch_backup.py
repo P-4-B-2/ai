@@ -2,7 +2,7 @@ from typing import List, Dict
 from pathlib import Path
 import requests
 from datetime import datetime
-
+import os
 
 class ManagerAgent:
     def __init__(self, llm_agent, stt_agent, tts_agent, api_base_url, bench_id):
@@ -20,9 +20,35 @@ class ManagerAgent:
 
         self.questions = []
         self.headers = {
+            "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjhkMjUwZDIyYTkzODVmYzQ4NDJhYTU2YWJhZjUzZmU5NDcxNmVjNTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZnJhbmstZGUtcHJhdGVuZGUtYmFuayIsImF1ZCI6ImZyYW5rLWRlLXByYXRlbmRlLWJhbmsiLCJhdXRoX3RpbWUiOjE3Mzk0NDg1MDIsInVzZXJfaWQiOiJuZUtjUndaN2NBTlVrVjZIaTl5bmVJallvQ3MyIiwic3ViIjoibmVLY1J3WjdjQU5Va1Y2SGk5eW5lSWpZb0NzMiIsImlhdCI6MTczOTQ0ODUwMiwiZXhwIjoxNzM5NDUyMTAyLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImpvaG4uZG9lQGV4YW1wbGUuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.s3gLqaL6jVHOpu714rIFmNQL4iJ0SLI0K2iz0uoO2o4hnBJTuPZudvhoAi5TGCLoxnsSZkE4wqPARgZ_THDQLet-nnST2nqmXM1s1KAqZM3CcFZLfBqBurA8EnZBS6WyCmUiyMdBimJhF41HTbJfk72-CJ1WZTjeP5kRWamVvBMWwD7wLo8-lvhwLMQQiej9ATYTYEzLlVtk6Sj3yPkriLAZgzWftxTNdm5GcEfuKUsu4WTYAi1QNWWtsA1yeEZts-96h0OSLnhHwbXtWBAhOFS-BKB0k8_2dUGqAtJ6CCvaxpFE7CHsjlooLmuHuNksQiFdQSQgpq8uUCZSsTc20g",
             "Content-Type": "application/json"
         }
 
+            # Get Bearer Token
+    def fetch_bearer_token(self) -> None:
+            """Fetch the last conversation for analysis."""
+            url = f"{self.api_base_url}token/generate"
+
+            payload = {
+                "ApiKey": os.environ.get("API_KEY")
+            }
+
+            response = requests.post(url, headers=self.headers, json=payload)
+
+            if response.status_code == 200:
+                token = response.json()
+                if token:
+                    self.headers = {
+                    "Authorization": "Bearer " + token['token'],
+                    "Content-Type": "application/json",
+                    }
+                    print(self.headers)
+                    print(f"Fetched the token successfully")
+                else:
+                    print("No response.")
+            else:
+                raise Exception(f"Failed to fetch token: {response.status_code}")
+            
     # Post Conversation
     def create_conversation(self) -> None:
         """Initialize a new conversation by sending a POST request."""
@@ -30,19 +56,19 @@ class ManagerAgent:
 
         
         payload = {
-            "start_datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            "end_datetime": None,
+            "startDatetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "endDatetime": None,
             "sentiment": None,
             "summary": None,
-            "bench_id": self.bench_id,
+            "benchId": self.bench_id,
         }
         response = requests.post(url, headers=self.headers, json=payload)
         if response.status_code == 201:
             self.new_conversation = payload
-            self.conversation_id = response.json()["conversationId"]
+            self.conversation_id = response.json()["id"]
             print(f"Conversation started. ID: {self.conversation_id}")
         else:
-            raise Exception(f"Failed to create conversation: {response.text}")
+            raise Exception(f"Failed to create conversation: {response.status_code}")
 
     # Put Conversation
     def end_conversation(self) -> None:
@@ -109,6 +135,8 @@ class ManagerAgent:
 
     def run(self) -> None:
         """Execute the AI-driven questionnaire loop."""
+
+        # self.fetch_bearer_token()
         conversation_history: List[Dict] = []
     
         # Start a new conversation

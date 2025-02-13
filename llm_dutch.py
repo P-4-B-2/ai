@@ -130,7 +130,7 @@ Geef een oordeel in het volgende formaat: 'Ja', 'Nee', 'Off', 'Einde'.
             if "user" in msg:
                 messages.append({"role": "user", "content": msg["user"]})
             if "bank" in msg:
-                messages.append({"role": "bank", "content": msg["bank"]})
+                messages.append({"role": "assistant", "content": msg["bank"]})
         messages.append({"role": "user", "content": f"Vraag: {current_question}\nReactie: {user_message}"})
 
         try:

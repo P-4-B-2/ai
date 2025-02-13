@@ -87,7 +87,7 @@ class ManagerAgent:
 
         }
         response = requests.put(url, headers=self.headers,json=payload)
-        if response.status_code == 200:
+        if response.status_code == 204:
             print(f"Conversation {self.conversation_id} successfully updated with end time.")
         else:
             raise Exception(f"Failed to update conversation: {response.text}")

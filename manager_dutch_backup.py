@@ -83,7 +83,7 @@ class ManagerAgent:
             "endDatetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # Current UTC time in ISO 8601 format
             "summary": None,  # Optionally, you can update this field
             "sentiment": None,  # Optionally, update sentiment analysis if available
-            "bench_id": self.bench_id,
+            "benchId": self.bench_id,
 
         }
         response = requests.put(url, headers=self.headers,json=payload)

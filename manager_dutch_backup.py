@@ -78,8 +78,8 @@ class ManagerAgent:
 
         url = f"{self.api_base_url}conversations/{self.conversation_id}"
         payload = {
-            "start_datetime": self.new_conversation['start_datetime'],
-            "end_datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # Current UTC time in ISO 8601 format
+            "startDatetime": self.new_conversation['start_datetime'],
+            "endDatetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # Current UTC time in ISO 8601 format
             "summary": None,  # Optionally, you can update this field
             "sentiment": None,  # Optionally, update sentiment analysis if available
             "bench_id": self.bench_id,
@@ -122,9 +122,10 @@ class ManagerAgent:
         """Submit a user's response for a specific question."""
         url = f"{self.api_base_url}answers"
         payload = {
+            "id": self.conversation_id,
+            "response": user_response,
             "conversationId": self.conversation_id,
             "questionId": question_id,
-            "response": user_response,
             "keywords": []
         }
         response = requests.post(url, headers=self.headers, json=payload )

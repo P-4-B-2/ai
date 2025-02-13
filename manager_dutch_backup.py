@@ -23,14 +23,14 @@ class ManagerAgent:
             "Content-Type": "application/json"
         }
 
-       # Post Conversation
+    # Post Conversation
     def create_conversation(self) -> None:
         """Initialize a new conversation by sending a POST request."""
-        url = f"{self.api_base_url}/conversations"
+        url = f"{self.api_base_url}conversations"
 
         
         payload = {
-            "start_datetime": datetime.now().isoformat() + "Z",
+            "start_datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             "end_datetime": None,
             "sentiment": None,
             "summary": None,
@@ -44,17 +44,16 @@ class ManagerAgent:
         else:
             raise Exception(f"Failed to create conversation: {response.text}")
 
-
-        # Put Conversation
+    # Put Conversation
     def end_conversation(self) -> None:
         """Finalize the conversation by sending a PUT request with the end time."""
         if not self.conversation_id:
             raise Exception("No active conversation to end.")
 
-        url = f"{self.api_base_url}/conversations/{self.conversation_id}"
+        url = f"{self.api_base_url}conversations/{self.conversation_id}"
         payload = {
             "start_datetime": self.new_conversation['start_datetime'],
-            "end_datetime": datetime.now().isoformat() + "Z",  # Current UTC time in ISO 8601 format
+            "end_datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # Current UTC time in ISO 8601 format
             "summary": None,  # Optionally, you can update this field
             "sentiment": None,  # Optionally, update sentiment analysis if available
             "bench_id": self.bench_id,
@@ -69,20 +68,12 @@ class ManagerAgent:
     # Get Questionnaire
     def fetch_questions(self) -> None:
         """Fetch questions for the questionnaire."""
-        url = f"{self.api_base_url}/questions"
+        url = f"{self.api_base_url}questions/active"
         response = requests.get(url, headers=self.headers)
         if response.status_code == 200:
             # Filter out only active questions
 
-            all_questions = response.json()
-
-            # Filter only active questions and sort them based on `isActive`
-
-            self.questions = sorted(
-                filter(lambda q: q.get('isActive', False), all_questions),
-                key=lambda q: q['isActive'],
-                reverse=True  # Ensures active questions are at the top
-            )
+            self.questions = response.json()
             print(f"Fetched {len(self.questions)} active questions.")
         else:
             raise Exception(f"Failed to fetch questions: {response.text}")
@@ -103,7 +94,7 @@ class ManagerAgent:
     # Post Answers
     def submit_answer(self, question_id: int, user_response: str) -> None:
         """Submit a user's response for a specific question."""
-        url = f"{self.api_base_url}/answers"
+        url = f"{self.api_base_url}answers"
         payload = {
             "conversationId": self.conversation_id,
             "questionId": question_id,

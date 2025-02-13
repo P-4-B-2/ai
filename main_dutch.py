@@ -5,6 +5,7 @@ from manager_dutch import ManagerAgent
 
 
 def main():
+    
     llm_agent = LLMAgent()
     stt_agent = SpeechToTextAgent(model_name="base")
     tts_agent = TTSAgent()

@@ -166,6 +166,9 @@ class ManagerAgent:
                 print("Questionnaire is complete")
                 self.end_conversation()
                 return
+            
+            current_question_id = current_question['id']
+
     
             # Ask the first question
             self.tts_agent.text_to_speech(current_question['text'])

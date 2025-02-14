@@ -21,30 +21,30 @@ class SSAgent:
             "Content-Type": "application/json",
         }
 
-        # Get Bearer Token
-        def fetch_bearer_token(self) -> None:
-            """Fetch the last conversation for analysis."""
-            url = f"{self.api_base_url}token/generate"
+        # # Get Bearer Token
+        # def fetch_bearer_token(self) -> None:
+        #     """Fetch the last conversation for analysis."""
+        #     url = f"{self.api_base_url}token/generate"
 
-            payload = {
-                "ApiKey": os.environ.get("API_KEY")
-            }
+        #     payload = {
+        #         "ApiKey": os.environ.get("API_KEY")
+        #     }
 
-            response = requests.post(url, headers=self.headers, json=payload)
+        #     response = requests.post(url, headers=self.headers, json=payload)
 
-            if response.status_code == 200:
-                token = response.json()
-                if token:
-                    self.headers = {
-                    "Authorization": "Bearer " + token['token'],
-                    "Content-Type": "application/json",
-                    }
-                    print(self.headers)
-                    print(f"Fetched the token successfully")
-                else:
-                    print("No response.")
-            else:
-                raise Exception(f"Failed to fetch token: {response.status_code}")
+        #     if response.status_code == 200:
+        #         token = response.json()
+        #         if token:
+        #             self.headers = {
+        #             "Authorization": "Bearer " + token['token'],
+        #             "Content-Type": "application/json",
+        #             }
+        #             print(self.headers)
+        #             print(f"Fetched the token successfully")
+        #         else:
+        #             print("No response.")
+        #     else:
+        #         raise Exception(f"Failed to fetch token: {response.status_code}")
 
         # Get Conversations  
         def fetch_last_conversation(self) -> None:

@@ -17,7 +17,7 @@ class SSAgent:
             self.conversation_history=None
             self.api_base_url = "https://frankdepratendebank.azurewebsites.net/api/"
             self.headers = {
-            "Authorization": "",
+            "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjBjYmJiZDI2NjNhY2U4OTU4YTFhOTY4ZmZjNDQxN2U4MDEyYmVmYmUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZnJhbmstZGUtcHJhdGVuZGUtYmFuayIsImF1ZCI6ImZyYW5rLWRlLXByYXRlbmRlLWJhbmsiLCJhdXRoX3RpbWUiOjE3Mzk1MTc3NzgsInVzZXJfaWQiOiJuZUtjUndaN2NBTlVrVjZIaTl5bmVJallvQ3MyIiwic3ViIjoibmVLY1J3WjdjQU5Va1Y2SGk5eW5lSWpZb0NzMiIsImlhdCI6MTczOTUxNzc3OCwiZXhwIjoxNzM5NTIxMzc4LCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImpvaG4uZG9lQGV4YW1wbGUuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.Fr-bmpuWORccPX1XFnNvj_mnGqaKarUjrWbyB4d1m-pt0RjX_wIL95pgGVdlQEjSVfj4EyuFWBgyXMqDM4MuYkBszE5NugxiOB5yw4Wcnh3v2g0CIA1c4vil9VVlk0z4l3sCttcILRUAeLazrIqUBxk9B6l6ZMFD6wkVKTK6DUZ9ZEa1mzRAk-2L_UlJv5pcwDz1re2bfIZAkz2W8whsrWqA8lKsjySTD5LZtBEYYUzu_XtJZioyPSTt59r8DA1uIdvXfJnE4RtIJXsFWfuthTv4ogjN5aeipR5TI-OIRq2kOSMemsbLeydRaoaPwtWAl5FNGRKBNiaBV4CMtkhFLA",
             "Content-Type": "application/json",
         }
 
@@ -313,9 +313,9 @@ Geëxtraheerde trefwoorden: [verkeer, parkeren]
             """Run the SS Agent to process the conversation and provide analysis."""
             try:
 
-                #Fetch bearer token
+                # #Fetch bearer token
 
-                self.fetch_bearer_token()
+                # self.fetch_bearer_token()
                 # Fetch the last conversation
                 self.fetch_last_conversation()
 

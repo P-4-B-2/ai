@@ -1,3 +1,4 @@
+
 sounddevice
 vosk
 openai-whisper
@@ -9,3 +10,5 @@ torch
 numpy
 transformers
 pyttsx3
+requests==2.31.0
+

@@ -8,3 +8,4 @@ sounddevice
 torch
 numpy
 transformers
+pyttsx3

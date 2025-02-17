@@ -1,2 +1,14 @@
-groq==0.5.0
+
+sounddevice
+vosk
+openai-whisper
+gtts
+pygame
+groq
+sounddevice
+torch
+numpy
+transformers
+pyttsx3
 requests==2.31.0
+

@@ -17,8 +17,8 @@ The **Talking Bench AI** is an interactive system designed to collect user feedb
 📄 **main_dutch.py** *(Bench-side AI – Main File)*  
 - Runs the conversation loop on the physical bench.  
 - Uses gTTS for text-to-speech.  
-- Captures user responses using Vosk for speech-to-text.  
-- Sends responses for classification (positive, neutral, or negative).  
+- Captures user responses for speech-to-text.  
+- Sends responses for classification.  
 
 📄 **main.py** *(Cloud AI – Sentiment Analysis & Processing)*  
 - Processes user responses from the bench.  
